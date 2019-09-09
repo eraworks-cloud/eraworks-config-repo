@@ -66,3 +66,26 @@ spring:
         #设置监控页面的登录名和密码
         login-username: eraworks
         login-password: druid
+  #邮件配置
+  mail:
+    host: smtp.163.com
+    username: eraworks_cloud@163.com
+    password: 1qaz@WSX
+    port: 465
+    protocol: smtp
+    test-connection: false
+    default-encoding: UTF-8
+    properties:
+      mail:
+        debug: true
+        smtp:
+          auth: true
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: 465
+          starttls:
+            enable: true
+            required: true
