@@ -1,0 +1,28 @@
+
+spring:
+  boot:
+    admin:
+      client:
+        metadata:
+          user:
+            name: ${security.user.name}
+            password: ${security.user.password}
+      monitor:
+        period: 60000
+      discovery:
+        enabled: true
+      notify:
+        mail:
+          to: 18795957873@139.com
+          from: eraworks_cloud@163.com
+      turbine:
+        clusters: default
+        location: eraworks-monitor
+      routes:
+        endpoints: env,metrics,dump,jolokia,info,configprops,trace,logfile,refresh,flyway,liquibase,heapdump,loggers,auditevents,hystrix.stream
+security:
+  user:
+    name: admin
+    password: admin
+  basic:
+    enabled: false
