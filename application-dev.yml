@@ -64,5 +64,5 @@ spring:
       stat-view-servlet:
         allow:
         #设置监控页面的登录名和密码
-        login-username: admin
-        login-password: admin
+        login-username: eraworks
+        login-password: druid
