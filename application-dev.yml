@@ -1,4 +1,4 @@
-#如果使用https,并且使用的是SpringBoot内嵌的tomcat,需要获取客户端正确的ip地址需要以下配置
+#~作用:如果使用https,并且使用的是SpringBoot内嵌的tomcat,需要获取客户端正确的ip地址需要以下配置
 server:
   tomcat:
     uri-encoding: UTF-8    
@@ -7,6 +7,7 @@ server:
   
 #在SpringBoot 1.5.x版中通过management.security.enabled=false来暴露所有端点，这种方式在2.0之后的版本无效
 #去官网查看了2.0之后版本暴露站点的方式,存在两种方式,电无忧选择直接开启并暴露所有站点
+#~作用:除开health接口还依赖endpoints.health.sensitive的配置外，其他接口都不需要输入用户名和密码了
 management:
   endpoints:
     web:
