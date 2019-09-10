@@ -15,9 +15,9 @@ spring:
         mail:
           to: 18795957873@139.com
           from: eraworks_cloud@163.com
-      turbine:
-        clusters: default
-        location: eraworks-monitor
+      #turbine:
+        #clusters: default
+        #location: eraworks-monitor
       routes:
         endpoints: env,metrics,dump,jolokia,info,configprops,trace,logfile,refresh,flyway,liquibase,heapdump,loggers,auditevents,hystrix.stream
 security:
@@ -26,7 +26,7 @@ security:
     password: admin
   basic:
     enabled: false
-turbine:
-  app-config: eraworks-gateway #收集监控信息的服务名
-  combine-host-port: true #表示同一主机上的服务通过host和port的组合来进行区分，默认情况下是使用host来区分，这样会使本地调试有问题
-  cluster-name-expression: new String('default') #集群名称
+#turbine:
+  #app-config: eraworks-gateway #收集监控信息的服务名
+  #combine-host-port: true #表示同一主机上的服务通过host和port的组合来进行区分，默认情况下是使用host来区分，这样会使本地调试有问题
+  #cluster-name-expression: new String('default') #集群名称
