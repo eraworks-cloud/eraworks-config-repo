@@ -1,170 +1,133 @@
-#~作用:如果使用https,并且使用的是SpringBoot内嵌的tomcat,需要获取客户端正确的ip地址需要以下配置
-server:
-  tomcat:
-    uri-encoding: UTF-8    
-    remote-ip-header: x-forwarded-for
-  use-forward-headers: true
-#在SpringBoot 1.5.x版中通过management.security.enabled=false来暴露所有端点，这种方式在2.0之后的版本无效
-#去官网查看了2.0之后版本暴露站点的方式,存在两种方式,电无忧选择直接开启并暴露所有站点
-#~作用:除开health接口还依赖endpoints.health.sensitive的配置外，其他接口都不需要输入用户名和密码了
+# 加解密根密码
+jasypt:
+  encryptor:
+    password: eraworks #根密码
+
+# Spring 相关
+spring:
+  redis:
+    password: dwy121
+    host: eraworks-redis
+  # zipkin
+  zipkin:
+    enabled: true
+    base-url: http://eraworks-zipkin
+  sleuth:
+    web:
+      client:
+        enabled: true
+    sampler:
+      # 默认的采样比率为0.1，不能看到所有请求数据
+      # 更改采样比率为1，就能看到所有的请求数据了，但是这样会增加接口调用延迟
+      probability: 0.2
+
+# 暴露监控端点
 management:
   endpoints:
     web:
       exposure:
         include: '*'
-spring:
-  aop:
-    #~proxy-target-class:该属性值默认为false,表示使用JDK动态代理织入增强;当值为true时,表示使用CGLib动态代理织入增强;
-    proxy-target-class: true
-    #~springboot此配置是默认开启的,但是配置之后，相当于在程序启动主类中增加了@EnableAspectJAutoProxy注解
-    auto: true
-  #rabbitmq连接信息
-  rabbitmq:
-    host: 118.178.141.107
-    port: 5672
-    username: rabbitadmin
-    password: 123456
-    #~确认消息发送成功，通过实现ConfirmCallBack接口，消息发送到交换器Exchange后触发回调
-    #publisher-confirms: true
-    #~这里不需要加/，rabbitMQ 默认就有个/，加了会有2个;springboot 会直接把这个值赋值给虚拟主机变量
-    #virtualHost: /
-  #redis连接信息
-  redis:
-    host: 121.40.33.126
-    password: dwy121
-    port: 6379
-    timeout: 0
-    #max-active: -1
-    #max-wait: -1
-    #max-idle: 8
-    #min-idle: 0
-  #数据库连接信息
-  datasource:
-    driver-class-name: com.mysql.jdbc.Driver
-    #~配置监控统计拦截的filters，去掉后监控界面sql无法统计，stat是统计，wall是SQL防火墙，防SQL注入的，还有一个参数是log4j,是用来输出统计数据的工具类，不配置
-    filters: stat,wall
-    druid:
-      #~初始化大小，最小，最大，应用所有的数据源中
-      initial-size: 50
-      min-idle: 50
-      max-active: 100
-      max-wait: 3000
-      #~即在获取Connection对象时检测其可用性),不过这样会影响性能,但是这个配置是最有效的
-      test-on-borrow: true
-      #~配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
-      time-between-eviction-runs-millis: 60000
-      #~配置一个连接在池中最小生存的时间，单位是毫秒
-      min-evictable-idle-time-millis: 300000
-      #配置Druid的基础监控功能
-      web-stat-filter:
-        #设置不统计哪些URL
-        exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
-      stat-view-servlet:
-        allow:
-        #设置监控页面的登录名和密码
-        login-username: eraworks
-        login-password: druid
-  #邮件配置
-  mail:
-    #~设置邮箱主机
-    host: smtp.163.com
-    #~设置用户名和密码
-    username: eraworks_cloud@163.com
-    password: 1qaz@WSX
-    port: 465
-    protocol: smtp
-    test-connection: false
-    default-encoding: UTF-8
-    properties:
-      mail:
-        debug: true
-        smtp:
-          auth: true
-          connectiontimeout: 10000
-          timeout: 10000
-          writetimeout: 10000
-          socketFactory:
-            class: javax.net.ssl.SSLSocketFactory
-            port: 465
-          #当SMTP需要SSL验证时，需要设定，如果不设定，会出现异常
-          starttls:
-            enable: true
-            required: true
-  boot:
-    admin:
-      username: admin
-      password: admin
-  zipkin:
-    rabbitmq:
-      queue: zipkin
-  #~多备注一些
-  #在微服务框架中，一个由客户端发起的请求在后端系统中会经过多个不同的的服务节点调用来协同产生最后的请求结果，
-  #  每一个前段请求都会形成一条复杂的分布式服务调用链路，链路中的任何一环出现高延时或错误都会引起整个请求最后的失败
-  #Spring Cloud Sleuth提供了一套完整的服务跟踪的解决方案
-  #跟踪原理：pom中依赖spring-cloud-starter-sleuth包后，每次链路请求都会添加一串追踪信息，格式是[server-name, main-traceId,sub-spanId,boolean]
-  #第一个参数：服务结点名称
-  #第二个参数：一条链路唯一的ID，叫TraceID
-  #第三个参数：链路中每一环的ID，叫做SpanID
-  #第四个参数：是否将信息输出到Zipkin等服务收集和展示
-  #这种机制是如何实现的呢？我们知道Spring Framework微服务是通过http协议通信的（与之对立的是dubbo的RPC方式），所以Sleuth的实现也是基于http的，又不能影响正常的业务传递，所以能做文章的只能在http 的header上
-  # Sleuth会在每个请求的header上添加跟踪需求的重要信息，例如：
-  #X-B3-TraceId：对应TraceID
-  #X-B3-SpanId：对应SpanID
-  #X-B3-ParentSpanId：前面一环的SpanID
-  #X-B3-Sampled：是否被选中抽样输出
-  #X-Span-Name：工作单元名称
-  #sleuth.sampler.percentage该配置：
-  #日志采集的越多，追踪越全面，但是消耗也越大；反之日志追踪不够多也就失去了意义。到底追踪多少日志才是平衡点？
-  #Spring Cloud Sleuth把这个问题交给了使用者，通过配置spring.sleuth.sampler.percentage=0.1这个参数来决定了日志记录发送给采集器的概率，0-1交给使用者自己配置。
-  #开发阶段和运行初期，一般配置成1全量收集日志，到了上线后可以慢慢降低这一概率
-  sleuth:
-    sampler:
-      percentage: 0.2
-#Feign 默认是不开启 Hystrix 的。默认为：false
+
+# feign 配置
 feign:
   hystrix:
     enabled: true
+  okhttp:
+    enabled: true
+  httpclient:
+    enabled: false
   client:
     config:
       default:
-        #请求连接超时时间
-        connectTimeout: 5000
-        #请求处理超时时间
-        readTimeout: 5000
-        
-ribbon:
-  eager-load:
-    #开启Ribbon的饥饿加载模式
-    enabled: true
-  #当前实列重试次数
-  MaxAutoRetries: 1
-  #切换实例的重试次数
-  MaxAutoRetriesNextServer: 2
-  #是否对所有操作重试
-  OkToRetryOnAllOperations: false
-  #请求连接的超时时间
-  ConnectTimeout: 60000
-  #请求处理的超时时间
-  ReadTimeout: 20000
+        connectTimeout: 10000
+        readTimeout: 10000
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
 
+# hystrix 配置
 hystrix:
   command:
     default:
       execution:
-        timeout:
-          enabled: true
         isolation:
+          strategy: SEMAPHORE
           thread:
-            #断路器的超时时间需要大于ribbon的超时时间，不然不会触发重试
-            timeoutInMilliseconds: 20000
+            timeoutInMilliseconds: 60000
+  shareSecurityContext: true
 
-#公共配置信息
-eraworks:
-  auth:
-    jwt:
-      expiredRemainMinutes: 20
-      expiredMinutes: 120
-  aliyun:
-    key:
-      accessKeyId: 'xxxxx'
-      accessKeySecret: 'xxx'
+#请求处理的超时时间
+ribbon:
+  ReadTimeout: 10000
+  ConnectTimeout: 10000
+
+# mybaits-plus配置
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*Mapper.xml
+  global-config:
+    banner: false
+    db-config:
+      id-type: 0
+      field-strategy: 1
+      table-underline: true
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+
+# spring security 配置
+security:
+  oauth2:
+    resource:
+      loadBalanced: true
+      token-info-uri: http://eraworks-auth/oauth/check_token
+      
+# Swagger相关的配置
+swagger:
+  # 标题,默认空
+  title: 'Eraworks Swagger API'
+  # 描述,默认空
+  description: '电无忧xxx项目接口文档'
+  # 版本,默认空
+  version: '1.0.0'
+  # 许可证,默认空
+  license: 'Powered By Eraworks'
+  # 许可证URL,默认空
+  licenseUrl: 'http://www.eraworks.com/'
+  # 服务条款URL,默认空
+  terms-of-service-url: 'http://www.eraworks.com/'
+  # 文档的host信息，默认：空
+  host: 'localhost:9999'
+  # swagger会解析的包路径,默认为空，扫描所有包
+  base-package: '' 
+  # swagger会解析的url规则
+  base-path: /**
+  # 在basePath基础上需要排除的url规则
+  exclude-path: 
+    - /actuator/**
+    - /error
+  # 联系人相关配置
+  contact:
+    # 联系人姓名，默认空
+    name: '电无忧'
+    # 联系人Email，默认空
+    email: '18795957873@139.com'
+    # 联系人URL，默认空
+    url: 'http://www.eraworks.com/'
+  # 统一鉴权相关配置
+  authorization:
+    # 鉴权策略名称，默认空
+    name: 'eraworks OAuth'
+    # 需要开启鉴权URL的正则，默认匹配所有
+    auth-regex: '^.*$'
+    # 鉴权作用域列表配置,默认空
+    authorization-scope-list:
+        # 鉴权作用域名称,默认空
+      - scope: 'server'
+        # 鉴权作用域描述,默认空
+        description: 'server all'
+    # 校验token的地址列表,默认空  
+    token-url-list:
+      - 'http://localhost:9999/auth/oauth/token'
